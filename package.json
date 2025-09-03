@@ -1,0 +1,43 @@
+{
+  "name": "giflab-pro",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Conversor profissional de vídeo para GIF com FFmpeg.wasm",
+  "homepage": "https://marcostolosa.github.io/GifLab",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
+    "lucide-react": "^0.316.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "gh-pages": "^6.1.1",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  },
+  "keywords": [
+    "gif",
+    "converter",
+    "video",
+    "ffmpeg",
+    "wasm",
+    "react",
+    "vite"
+  ],
+  "author": "Marcos Tolosa",
+  "license": "MIT"
+}
