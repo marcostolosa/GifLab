@@ -7,10 +7,10 @@ import {
   RotateCcw, RotateCw, Sliders, Eye, Palette, Wand2, Crown
 } from "lucide-react";
 
-const CORE_VERSION = "0.12.10";
 const MIRRORS = [
-  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/umd", label: "unpkg MT" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd", label: "unpkg" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "MT ESM" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm", label: "Core ESM" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm", label: "JSDelivr ESM" }),
 ];
 
 const ffmpeg = new FFmpeg();
