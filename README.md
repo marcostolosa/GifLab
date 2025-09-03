@@ -5,6 +5,8 @@ Professional video to GIF converter with advanced technology.
 [![Deploy Status](https://github.com/marcostolosa/GifLab/workflows/Deploy%20to%20GitHub%20Pages/badge.svg)](https://github.com/marcostolosa/GifLab/actions)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://gif.mindsecurity.org)
 
+![](assets/demo.png)
+
 ## Features
 
 - Performance optimization powered by FFmpeg.wasm
