@@ -1,4 +1,4 @@
-# GifLab Pro
+# GifLab Pro 
 
 Professional video to GIF converter with advanced technology.
 
