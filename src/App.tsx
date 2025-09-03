@@ -166,6 +166,7 @@ export default function GifLabPro() {
       setLoadingMsg("❌ Falha ao carregar FFmpeg. Tente recarregar a página.");
     })();
   }, []);
+
   // Efeito para alternar o tema dark/light
   useEffect(() => {
     if (darkMode) {
@@ -195,13 +196,20 @@ export default function GifLabPro() {
     }
   }, []);
 
-  const handleFileSelection = useCallback((selectedFile: File) => {
+  const handleFileSelection = useCallback((selectedFile: File | null) => {
     setCurrentGif(null);
-    if (videoUrl) URL.revokeObjectURL(videoUrl);
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+    }
     
-    const url = URL.createObjectURL(selectedFile);
-    setFile(selectedFile);
-    setVideoUrl(url);
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setFile(selectedFile);
+      setVideoUrl(url);
+    } else {
+      setFile(null);
+      setVideoUrl(null);
+    }
   }, [videoUrl]);
 
   const onLoadedMetadata = useCallback(() => {
@@ -330,6 +338,8 @@ export default function GifLabPro() {
       setCurrentGif(newGif);
       setGifHistory(prev => [newGif, ...prev.slice(0, 4)]); // Manter apenas os 5 mais recentes
       setLoadingMsg("✨ GIF criado com sucesso!");
+      setFile(null);
+      setVideoUrl(null);
 
     } catch (error) {
       console.error("Erro na geração:", error);
@@ -371,7 +381,7 @@ export default function GifLabPro() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gray-100 dark:bg-gradient-to-br dark:from-slate-900 dark:via-purple-900 dark:to-slate-900">
       {/* Header premium com controles */}
       <header className="bg-white/5 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -489,7 +499,7 @@ export default function GifLabPro() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleFileSelection(null as any)}
+                      onClick={() => handleFileSelection(null)}
                       className="text-white/60 hover:text-red-400 transition-colors"
                     >
                       ✕
