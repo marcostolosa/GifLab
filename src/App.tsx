@@ -166,6 +166,14 @@ export default function GifLabPro() {
       setLoadingMsg("❌ Falha ao carregar FFmpeg. Tente recarregar a página.");
     })();
   }, []);
+  // Efeito para alternar o tema dark/light
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   // Drag & Drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
