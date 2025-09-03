@@ -7,10 +7,10 @@ import {
   RotateCcw, RotateCw, Sliders, Eye, Palette, Wand2, Crown
 } from "lucide-react";
 
-const CORE_VERSION = "0.12.6";
+const CORE_VERSION = "0.12.10";
 const MIRRORS = [
-  (v: string) => ({ base: `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${v}/dist`, label: "jsDelivr" }),
-  (v: string) => ({ base: `https://unpkg.com/@ffmpeg/core@${v}/dist`, label: "unpkg" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/umd", label: "unpkg MT" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd", label: "unpkg" }),
 ];
 
 const ffmpeg = new FFmpeg();
@@ -144,22 +144,22 @@ export default function GifLabPro() {
       }
 
       for (const [index, makeMirror] of MIRRORS.entries()) {
-        const { base, label } = makeMirror(CORE_VERSION);
+        const { base, label } = makeMirror();
         try {
-          setLoadingMsg(`Baixando de ${label}... (${index + 1}/${MIRRORS.length})`);
+          setLoadingMsg(`Carregando de ${label}... (${index + 1}/${MIRRORS.length})`);
           
           const coreURL = await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript");
           const wasmURL = await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm");
           const workerURL = await toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript");
           
-          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 45000);
+          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 30000);
           
           ffmpegLoaded = true;
           setReady(true);
           setLoadingMsg("FFmpeg carregado com sucesso!");
           return;
         } catch (err) {
-          console.warn(`Falha no mirror ${label}:`, err);
+          console.warn(`Mirror ${label} falhou:`, err);
           setLoadingMsg(`Mirror ${label} falhou. Tentando próximo...`);
         }
       }
