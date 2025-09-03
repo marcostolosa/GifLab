@@ -410,7 +410,7 @@ export default function GifLabPro() {
                   Presets
                 </button>
                 {showPresets && (
-                  <div className="absolute right-0 top-full mt-2 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-2 min-w-48 z-50">
+                  <div className="absolute right-0 top-full mt-2 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-2 min-w-48 z-[100]">
                     {quickPresets.map(preset => (
                       <button
                         key={preset.id}
