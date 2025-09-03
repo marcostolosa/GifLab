@@ -381,9 +381,9 @@ export default function GifLabPro() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-white dark:from-slate-900 dark:via-purple-900 dark:to-slate-900">
       {/* Header premium com controles */}
-      <header className="bg-white/5 backdrop-blur-xl border-b border-white/10">
+      <header className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -394,8 +394,8 @@ export default function GifLabPro() {
                 </div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">GifLab Pro</h1>
-                <p className="text-purple-200/80 text-sm">Conversor profissional de vídeo para GIF</p>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">GifLab Pro</h1>
+                <p className="text-gray-600 dark:text-purple-200/80 text-sm">Conversor profissional de vídeo para GIF</p>
               </div>
             </div>
             
@@ -404,6 +404,7 @@ export default function GifLabPro() {
               <div className="relative">
                 <button
                   onClick={() => setShowPresets(!showPresets)}
+                  data-testid="presets-button"
                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-white/90 text-sm font-medium transition-all"
                 >
                   <Zap className="w-4 h-4" />
@@ -415,6 +416,7 @@ export default function GifLabPro() {
                       <button
                         key={preset.id}
                         onClick={() => applyPreset(preset)}
+                        data-testid={`preset-${preset.id}`}
                         className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-all ${
                           currentPreset === preset.id 
                             ? 'bg-purple-500/30 text-white' 
@@ -431,6 +433,7 @@ export default function GifLabPro() {
               {/* Toggle tema */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
+                data-testid="theme-toggle"
                 className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white/90 transition-all"
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -452,10 +455,10 @@ export default function GifLabPro() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Upload Zone */}
-            <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 p-6">
+            <div className="bg-white/80 dark:bg-white/10 backdrop-blur-xl rounded-3xl border border-gray-200/50 dark:border-white/20 p-6">
               <div className="flex items-center gap-3 mb-6">
                 <FileVideo className="w-5 h-5 text-purple-400" />
-                <h2 className="text-xl font-semibold text-white">Vídeo de Entrada</h2>
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Vídeo de Entrada</h2>
               </div>
 
               {!file ? (
@@ -470,8 +473,8 @@ export default function GifLabPro() {
                   onDrop={handleDrop}
                 >
                   <Upload className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                  <h3 className="text-white text-lg font-medium mb-2">Arraste seu vídeo aqui</h3>
-                  <p className="text-white/70 text-sm mb-6">Ou clique para selecionar arquivo</p>
+                  <h3 className="text-gray-800 dark:text-white text-lg font-medium mb-2">Arraste seu vídeo aqui</h3>
+                  <p className="text-gray-600 dark:text-white/70 text-sm mb-6">Ou clique para selecionar arquivo</p>
                   <label className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-2xl text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all cursor-pointer">
                     <Upload className="w-4 h-4" />
                     Escolher Arquivo
@@ -587,6 +590,7 @@ export default function GifLabPro() {
                     <button
                       key={filter.id}
                       onClick={() => setSelectedFilter(filter.id)}
+                      data-testid={`filter-${filter.id}`}
                       className={`p-3 rounded-xl text-sm font-medium transition-all ${
                         selectedFilter === filter.id
                           ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
@@ -682,6 +686,7 @@ export default function GifLabPro() {
               <button
                 disabled={!file || generating || selectedDuration <= 0}
                 onClick={generateGif}
+                data-testid="generate-gif-button"
                 className="mt-6 w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-500 disabled:to-gray-600 disabled:opacity-50 px-8 py-4 rounded-2xl text-white font-bold text-lg shadow-2xl transition-all duration-300 transform hover:scale-[1.02] disabled:hover:scale-100 flex items-center justify-center gap-3"
               >
                 {generating ? (
