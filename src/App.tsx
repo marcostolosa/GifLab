@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 
 const MIRRORS = [
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm", label: "JSDelivr MT" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "Unpkg MT" }),
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm", label: "JSDelivr Core" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm", label: "Unpkg Core" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/umd", label: "Unpkg MT" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/umd", label: "JSDelivr MT" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd", label: "Unpkg Core" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd", label: "JSDelivr Core" }),
 ];
 
 const ffmpeg = new FFmpeg();

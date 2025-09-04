@@ -107,10 +107,12 @@
       window.addEventListener('load', () => {
         setTimeout(() => {
           const loadingScreen = document.getElementById('loading-screen');
-          if (loadingScreen) {
+          if (loadingScreen && loadingScreen.parentNode) {
             loadingScreen.classList.add('fade-out');
             setTimeout(() => {
-              loadingScreen.remove();
+              if (loadingScreen && loadingScreen.parentNode) {
+                loadingScreen.remove();
+              }
             }, 500);
           }
         }, 1000);
