@@ -329,7 +329,8 @@ export default function GifLabPro() {
 
   const buildFilters = useCallback(() => {
     const wh = `${width}:${height === "auto" ? -1 : height}`;
-    const baseFilters = [`fps=${fps}`, `scale=${wh}:flags=lanczos`];
+    const effectiveFps = Math.min(fps, quality === "fast" ? 8 : quality === "balanced" ? 10 : 12);
+    const baseFilters = [`fps=${effectiveFps}`, `scale=${wh}:flags=lanczos`];
     
     const currentFilter = quickFilters.find(f => f.id === selectedFilter);
     if (currentFilter && currentFilter.value) {
@@ -337,7 +338,7 @@ export default function GifLabPro() {
     }
     
     return baseFilters.join(",");
-  }, [width, height, fps, selectedFilter, quickFilters]);
+  }, [width, height, fps, selectedFilter, quickFilters, quality]);
 
   const getDitherMode = useCallback((q: typeof quality) => {
     switch (q) {
@@ -369,17 +370,18 @@ export default function GifLabPro() {
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
-        "-vf", `${buildFilters()},palettegen=max_colors=${quality === "fast" ? "64" : quality === "balanced" ? "96" : "128"}:stats_mode=diff`,
+        "-vf", `${buildFilters()},palettegen=max_colors=${quality === "fast" ? "32" : quality === "balanced" ? "48" : "64"}:stats_mode=single`,
         "-y", paletteName,
       ]);
 
-      setLoadingMsg("Criando GIF com alta qualidade...");
+      setLoadingMsg("Criando GIF ultra comprimido...");
       const args = [
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
         "-i", paletteName,
-        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle:new=1`,
+        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}`,
+        "-r", String(Math.min(fps, 12)), // Forçar FPS máximo de 12 para economizar
         ...(loop ? ["-loop", "0"] : ["-loop", "-1"]),
         "-y", outputName,
       ];
