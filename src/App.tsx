@@ -323,8 +323,8 @@ export default function GifLabPro() {
     if (!selectedDuration) return 0;
     const pixelsPerFrame = width * (height === "auto" ? Math.round(width * 0.75) : height);
     const totalFrames = selectedDuration * fps;
-    const qualityMultiplier = quality === "fast" ? 0.3 : quality === "balanced" ? 0.5 : 0.8;
-    return Math.round((pixelsPerFrame * totalFrames * qualityMultiplier) / 8000); // Aproximação em KB
+    const qualityMultiplier = quality === "fast" ? 0.08 : quality === "balanced" ? 0.12 : 0.18;
+    return Math.round((pixelsPerFrame * totalFrames * qualityMultiplier) / 20000); // Aproximação mais realista em KB
   }, [selectedDuration, width, height, fps, quality]);
 
   const buildFilters = useCallback(() => {
@@ -341,10 +341,10 @@ export default function GifLabPro() {
 
   const getDitherMode = useCallback((q: typeof quality) => {
     switch (q) {
-      case "fast": return "bayer:bayer_scale=3";
-      case "balanced": return "sierra2";
-      case "best": return "floyd_steinberg";
-      default: return "sierra2";
+      case "fast": return "bayer:bayer_scale=2";
+      case "balanced": return "bayer:bayer_scale=1";
+      case "best": return "sierra2";
+      default: return "bayer:bayer_scale=1";
     }
   }, []);
 
@@ -369,7 +369,7 @@ export default function GifLabPro() {
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
-        "-vf", `${buildFilters()},palettegen=stats_mode=full:max_colors=256`,
+        "-vf", `${buildFilters()},palettegen=max_colors=${quality === "fast" ? "64" : quality === "balanced" ? "96" : "128"}:stats_mode=diff`,
         "-y", paletteName,
       ]);
 
@@ -379,7 +379,7 @@ export default function GifLabPro() {
         "-t", String(selectedDuration),
         "-i", inputName,
         "-i", paletteName,
-        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle`,
+        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle:new=1`,
         ...(loop ? ["-loop", "0"] : ["-loop", "-1"]),
         "-y", outputName,
       ];
