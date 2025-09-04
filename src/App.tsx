@@ -328,9 +328,12 @@ export default function GifLabPro() {
   }, [selectedDuration, width, height, fps, quality]);
 
   const buildFilters = useCallback(() => {
-    const wh = `${width}:${height === "auto" ? -1 : height}`;
-    const effectiveFps = Math.min(fps, quality === "fast" ? 8 : quality === "balanced" ? 10 : 12);
-    const baseFilters = [`fps=${effectiveFps}`, `scale=${wh}:flags=lanczos`];
+    // REDUCE resolução automaticamente para economizar tamanho
+    const maxWidth = quality === "fast" ? 320 : quality === "balanced" ? 480 : 640;
+    const finalWidth = Math.min(width, maxWidth);
+    const wh = `${finalWidth}:${height === "auto" ? -1 : Math.round((height as number) * (finalWidth / width))}`;
+    
+    const baseFilters = [`fps=${fps}`, `scale=${wh}:flags=lanczos`];
     
     const currentFilter = quickFilters.find(f => f.id === selectedFilter);
     if (currentFilter && currentFilter.value) {
@@ -342,10 +345,10 @@ export default function GifLabPro() {
 
   const getDitherMode = useCallback((q: typeof quality) => {
     switch (q) {
-      case "fast": return "bayer:bayer_scale=2";
-      case "balanced": return "bayer:bayer_scale=1";
-      case "best": return "sierra2";
-      default: return "bayer:bayer_scale=1";
+      case "fast": return "bayer:bayer_scale=3";
+      case "balanced": return "sierra2";
+      case "best": return "floyd_steinberg";
+      default: return "sierra2";
     }
   }, []);
 
@@ -370,18 +373,18 @@ export default function GifLabPro() {
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
-        "-vf", `${buildFilters()},palettegen=max_colors=${quality === "fast" ? "32" : quality === "balanced" ? "48" : "64"}:stats_mode=single`,
+        "-vf", `${buildFilters()},palettegen=max_colors=${quality === "fast" ? "64" : quality === "balanced" ? "128" : "256"}:stats_mode=diff`,
         "-y", paletteName,
       ]);
 
-      setLoadingMsg("Criando GIF ultra comprimido...");
+      setLoadingMsg("Criando GIF otimizado...");
+      // Usar método SIMPLES que realmente funciona - só paleta + dithering + resolução reduzida
       const args = [
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
         "-i", paletteName,
-        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}`,
-        "-r", String(Math.min(fps, 12)), // Forçar FPS máximo de 12 para economizar
+        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle`,
         ...(loop ? ["-loop", "0"] : ["-loop", "-1"]),
         "-y", outputName,
       ];
