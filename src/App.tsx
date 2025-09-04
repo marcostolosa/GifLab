@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 
 const MIRRORS = [
-  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/umd", label: "Unpkg MT" }),
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/umd", label: "JSDelivr MT" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd", label: "Unpkg Core" }),
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd", label: "JSDelivr Core" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "Unpkg MT" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm", label: "JSDelivr MT" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm", label: "Unpkg Core" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm", label: "JSDelivr Core" }),
 ];
 
 const ffmpeg = new FFmpeg();
@@ -150,8 +150,9 @@ export default function GifLabPro() {
       }
 
       // Tentar carregar de cache primeiro (invalidar cache antigo)
-      const cacheKey = 'ffmpeg-cache-v2';
+      const cacheKey = 'ffmpeg-cache-v3';
       localStorage.removeItem('ffmpeg-cache-v1'); // Limpar cache antigo
+      localStorage.removeItem('ffmpeg-cache-v2'); // Limpar cache antigo
       const cachedMirror = localStorage.getItem(cacheKey);
       
       if (cachedMirror) {
