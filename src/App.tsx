@@ -8,9 +8,10 @@ import {
 } from "lucide-react";
 
 const MIRRORS = [
-  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "MT ESM" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm", label: "Core ESM" }),
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm", label: "JSDelivr ESM" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm", label: "JSDelivr MT" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "Unpkg MT" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm", label: "JSDelivr Core" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm", label: "Unpkg Core" }),
 ];
 
 const ffmpeg = new FFmpeg();
@@ -102,13 +103,16 @@ export default function GifLabPro() {
 
   // Função para aplicar preset rapidamente
   const applyPreset = useCallback((preset: typeof quickPresets[0]) => {
+    // Aplica as configurações
     setWidth(preset.width);
-    setHeight(preset.height);
+    setHeight(preset.height === 'auto' ? -1 : preset.height);
     setFps(preset.fps);
     setQuality(preset.quality);
     setCurrentPreset(preset.id);
-    setShowPresets(false);
+    // Força reset do estado antes de fechar para evitar race conditions
+    setTimeout(() => setShowPresets(false), 50);
   }, []);
+
 
   // Setup do FFmpeg com logs elegantes
   useEffect(() => {
@@ -134,8 +138,10 @@ export default function GifLabPro() {
     };
   }, []);
 
-  // Carregamento do FFmpeg
+  // Carregamento do FFmpeg com retry e cache
   useEffect(() => {
+    let isCancelled = false;
+    
     (async () => {
       if (ffmpegLoaded) { 
         setReady(true); 
@@ -143,16 +149,55 @@ export default function GifLabPro() {
         return; 
       }
 
+      // Tentar carregar de cache primeiro
+      const cacheKey = 'ffmpeg-cache-v1';
+      const cachedMirror = localStorage.getItem(cacheKey);
+      
+      if (cachedMirror) {
+        const { base, label } = JSON.parse(cachedMirror);
+        try {
+          setLoadingMsg(`Carregando de ${label} (cache)...`);
+          
+          const [coreURL, wasmURL, workerURL] = await Promise.all([
+            toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
+            toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
+            toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript")
+          ]);
+          
+          if (isCancelled) return;
+          
+          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 25000);
+          
+          ffmpegLoaded = true;
+          setReady(true);
+          setLoadingMsg("FFmpeg carregado com sucesso!");
+          return;
+        } catch (err) {
+          console.warn(`Cache ${label} falhou:`, err);
+          localStorage.removeItem(cacheKey);
+        }
+      }
+
+      // Fallback para mirrors normais
       for (const [index, makeMirror] of MIRRORS.entries()) {
+        if (isCancelled) return;
+        
         const { base, label } = makeMirror();
         try {
           setLoadingMsg(`Carregando de ${label}... (${index + 1}/${MIRRORS.length})`);
           
-          const coreURL = await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript");
-          const wasmURL = await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm");
-          const workerURL = await toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript");
+          const [coreURL, wasmURL, workerURL] = await Promise.all([
+            toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
+            toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
+            toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript")
+          ]);
           
-          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 30000);
+          if (isCancelled) return;
+          
+          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 25000);
+          
+          // Salvar mirror bem-sucedido no cache
+          localStorage.setItem(cacheKey, JSON.stringify({ base, label }));
           
           ffmpegLoaded = true;
           setReady(true);
@@ -160,11 +205,21 @@ export default function GifLabPro() {
           return;
         } catch (err) {
           console.warn(`Mirror ${label} falhou:`, err);
-          setLoadingMsg(`Mirror ${label} falhou. Tentando próximo...`);
+          if (index < MIRRORS.length - 1) {
+            setLoadingMsg(`Mirror ${label} falhou. Tentando próximo...`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa entre tentativas
+          }
         }
       }
-      setLoadingMsg("❌ Falha ao carregar FFmpeg. Tente recarregar a página.");
+      
+      if (!isCancelled) {
+        setLoadingMsg("❌ Falha ao carregar FFmpeg. Tente recarregar a página.");
+      }
     })();
+    
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   // Efeito para alternar o tema dark/light
@@ -403,15 +458,15 @@ export default function GifLabPro() {
               {/* Presets rápidos */}
               <div className="relative">
                 <button
-                  onClick={() => setShowPresets(!showPresets)}
+                  onClick={() => setShowPresets(prev => !prev)}
                   data-testid="presets-button"
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-white/90 text-sm font-medium transition-all"
+                  className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 px-4 py-2 rounded-xl text-gray-700 dark:text-white/90 text-sm font-medium transition-all"
                 >
                   <Zap className="w-4 h-4" />
                   Presets
                 </button>
                 {showPresets && (
-                  <div className="absolute right-0 top-full mt-2 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-2 min-w-48 z-[100]">
+                  <div className="absolute right-0 top-full mt-2 bg-white dark:bg-white/10 backdrop-blur-xl rounded-2xl border border-gray-200 dark:border-white/20 p-2 min-w-48 z-[9999]">
                     {quickPresets.map(preset => (
                       <button
                         key={preset.id}
@@ -419,8 +474,8 @@ export default function GifLabPro() {
                         data-testid={`preset-${preset.id}`}
                         className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-all ${
                           currentPreset === preset.id 
-                            ? 'bg-purple-500/30 text-white' 
-                            : 'text-white/80 hover:bg-white/10'
+                            ? 'bg-purple-500/30 text-gray-800 dark:text-white' 
+                            : 'text-gray-700 dark:text-white/80 hover:bg-gray-100 dark:hover:bg-white/10'
                         }`}
                       >
                         {preset.name}
@@ -434,12 +489,12 @@ export default function GifLabPro() {
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 data-testid="theme-toggle"
-                className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center text-white/90 transition-all"
+                className="w-10 h-10 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-xl flex items-center justify-center text-gray-700 dark:text-white/90 transition-all"
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               
-              <div className="hidden md:flex items-center gap-2 text-white/60 text-sm">
+              <div className="hidden md:flex items-center gap-2 text-gray-500 dark:text-white/60 text-sm">
                 <Zap className="w-4 h-4" />
                 <span>FFmpeg.wasm</span>
               </div>
@@ -474,13 +529,14 @@ export default function GifLabPro() {
                 >
                   <Upload className="w-12 h-12 text-purple-400 mx-auto mb-4" />
                   <h3 className="text-gray-800 dark:text-white text-lg font-medium mb-2">Arraste seu vídeo aqui</h3>
-                  <p className="text-gray-600 dark:text-white/70 text-sm mb-6">Ou clique para selecionar arquivo</p>
+                  <p className="text-gray-600 dark:text-white/70 text-sm mb-2">Ou clique para selecionar arquivo</p>
+                  <p className="text-gray-500 dark:text-white/50 text-xs">Formatos: MP4, WebM, AVI, MOV, MKV, M4V, 3GP</p>
                   <label className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-2xl text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all cursor-pointer">
                     <Upload className="w-4 h-4" />
                     Escolher Arquivo
                     <input
                       type="file"
-                      accept="video/*"
+                      accept="video/*,.mp4,.webm,.avi,.mov,.mkv,.m4v,.3gp"
                       className="hidden"
                       onChange={(e) => {
                         const selectedFile = e.target.files?.[0];
@@ -539,7 +595,7 @@ export default function GifLabPro() {
                         <div className="space-y-4">
                           <div>
                             <div className="flex justify-between text-sm mb-2">
-                              <span className="text-white/80">Início: {start.toFixed(1)}s</span>
+                              <span className="text-gray-700 dark:text-white/80">Início: {start.toFixed(1)}s</span>
                               <span className="text-purple-400">{selectedDuration.toFixed(1)}s selecionados</span>
                             </div>
                             <input
@@ -549,13 +605,13 @@ export default function GifLabPro() {
                               step={0.1}
                               value={start}
                               onChange={(e) => setStart(Math.min(Number(e.target.value), end - 0.1))}
-                              className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                              className="w-full h-2 bg-gray-200 dark:bg-white/20 rounded-lg appearance-none cursor-pointer slider"
                             />
                           </div>
                           <div>
                             <div className="flex justify-between text-sm mb-2">
-                              <span className="text-white/80">Fim: {end.toFixed(1)}s</span>
-                              <span className="text-white/60">Máx: {videoDuration.toFixed(1)}s</span>
+                              <span className="text-gray-700 dark:text-white/80">Fim: {end.toFixed(1)}s</span>
+                              <span className="text-gray-500 dark:text-white/60">Máx: {videoDuration.toFixed(1)}s</span>
                             </div>
                             <input
                               type="range"
@@ -564,7 +620,7 @@ export default function GifLabPro() {
                               step={0.1}
                               value={end}
                               onChange={(e) => setEnd(Math.max(Number(e.target.value), start + 0.1))}
-                              className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                              className="w-full h-2 bg-gray-200 dark:bg-white/20 rounded-lg appearance-none cursor-pointer slider"
                             />
                           </div>
                         </div>
@@ -584,7 +640,7 @@ export default function GifLabPro() {
 
               {/* Filtros rápidos */}
               <div className="mb-6">
-                <label className="block text-white/80 text-sm font-medium mb-3">🎨 Filtros Visuais</label>
+                <label className="block text-gray-700 dark:text-white/80 text-sm font-medium mb-3">🎨 Filtros Visuais</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {quickFilters.map(filter => (
                     <button
@@ -605,7 +661,7 @@ export default function GifLabPro() {
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-white/80 text-sm font-medium mb-2">Largura (px)</label>
+                  <label className="block text-gray-700 dark:text-white/80 text-sm font-medium mb-2">Largura (px)</label>
                   <input
                     type="number"
                     min={64}
@@ -613,35 +669,35 @@ export default function GifLabPro() {
                     step={8}
                     value={width}
                     onChange={(e) => setWidth(Math.max(64, Number(e.target.value) || 480))}
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/80 text-sm font-medium mb-2">Altura (px)</label>
+                  <label className="block text-gray-700 dark:text-white/80 text-sm font-medium mb-2">Altura (px)</label>
                   <input
                     type="text"
                     placeholder="auto"
-                    value={height === "auto" ? "" : String(height)}
+                    value={height === -1 ? "" : String(height)}
                     onChange={(e) => {
                       const val = e.target.value.trim();
                       if (val === "" || val === "auto") {
-                        setHeight("auto");
+                        setHeight(-1);
                       } else {
                         const num = Number(val);
                         if (!isNaN(num) && num >= 64) setHeight(num);
                       }
                     }}
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white/80 text-sm font-medium mb-2">FPS</label>
+                  <label className="block text-gray-700 dark:text-white/80 text-sm font-medium mb-2">FPS</label>
                   <select
                     value={fps}
                     onChange={(e) => setFps(Number(e.target.value))}
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value={8}>8 fps (menor)</option>
                     <option value={12}>12 fps</option>
@@ -653,11 +709,11 @@ export default function GifLabPro() {
                 </div>
 
                 <div>
-                  <label className="block text-white/80 text-sm font-medium mb-2">Qualidade</label>
+                  <label className="block text-gray-700 dark:text-white/80 text-sm font-medium mb-2">Qualidade</label>
                   <select
                     value={quality}
                     onChange={(e) => setQuality(e.target.value as any)}
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full bg-gray-50 dark:bg-white/10 border border-gray-300 dark:border-white/20 rounded-xl px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="fast">Rápida (menor qualidade)</option>
                     <option value="balanced">Balanceada (recomendado)</option>

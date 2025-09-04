@@ -84,3 +84,16 @@ jspm_packages/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Test files
+*.test.*
+*.spec.*
+test-*.cjs
+debug-*.cjs
+teste-*.cjs
+*-test.cjs
+
+# Temporary files
+*.tmp
+*.temp
+CNAME
