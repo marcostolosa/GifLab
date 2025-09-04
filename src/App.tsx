@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 
 const MIRRORS = [
-  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "Unpkg MT" }),
   () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core-mt@0.12.6/dist/esm", label: "JSDelivr MT" }),
-  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm", label: "Unpkg Core" }),
-  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm", label: "JSDelivr Core" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm", label: "Unpkg MT" }),
+  () => ({ base: "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm", label: "JSDelivr Core" }),
+  () => ({ base: "https://unpkg.com/@ffmpeg/core@0.12.10/dist/esm", label: "Unpkg Core" }),
 ];
 
 const ffmpeg = new FFmpeg();
@@ -150,9 +150,10 @@ export default function GifLabPro() {
       }
 
       // Tentar carregar de cache primeiro (invalidar cache antigo)
-      const cacheKey = 'ffmpeg-cache-v3';
+      const cacheKey = 'ffmpeg-cache-v4';
       localStorage.removeItem('ffmpeg-cache-v1'); // Limpar cache antigo
       localStorage.removeItem('ffmpeg-cache-v2'); // Limpar cache antigo
+      localStorage.removeItem('ffmpeg-cache-v3'); // Limpar cache antigo
       const cachedMirror = localStorage.getItem(cacheKey);
       
       if (cachedMirror) {
@@ -160,15 +161,21 @@ export default function GifLabPro() {
         try {
           setLoadingMsg(`Carregando de ${label} (cache)...`);
           
-          const [coreURL, wasmURL, workerURL] = await Promise.all([
-            toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
-            toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
-            toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript")
-          ]);
+          const coreURL = await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript");
+          const wasmURL = await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm");
+          
+          let workerURL;
+          try {
+            workerURL = await toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript");
+          } catch {
+            // Some versions don't have worker.js, use undefined
+            workerURL = undefined;
+          }
           
           if (isCancelled) return;
           
-          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 25000);
+          const loadConfig = workerURL ? { coreURL, wasmURL, workerURL } : { coreURL, wasmURL };
+          await loadWithTimeout(() => ffmpeg.load(loadConfig), 25000);
           
           ffmpegLoaded = true;
           setReady(true);
@@ -188,15 +195,21 @@ export default function GifLabPro() {
         try {
           setLoadingMsg(`Carregando de ${label}... (${index + 1}/${MIRRORS.length})`);
           
-          const [coreURL, wasmURL, workerURL] = await Promise.all([
-            toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
-            toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
-            toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript")
-          ]);
+          const coreURL = await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript");
+          const wasmURL = await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm");
+          
+          let workerURL;
+          try {
+            workerURL = await toBlobURL(`${base}/ffmpeg-core.worker.js`, "text/javascript");
+          } catch {
+            // Some versions don't have worker.js, use undefined
+            workerURL = undefined;
+          }
           
           if (isCancelled) return;
           
-          await loadWithTimeout(() => ffmpeg.load({ coreURL, wasmURL, workerURL }), 25000);
+          const loadConfig = workerURL ? { coreURL, wasmURL, workerURL } : { coreURL, wasmURL };
+          await loadWithTimeout(() => ffmpeg.load(loadConfig), 25000);
           
           // Salvar mirror bem-sucedido no cache
           localStorage.setItem(cacheKey, JSON.stringify({ base, label }));
