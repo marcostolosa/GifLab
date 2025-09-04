@@ -377,14 +377,16 @@ export default function GifLabPro() {
         "-y", paletteName,
       ]);
 
-      setLoadingMsg("Criando GIF otimizado...");
-      // Usar método SIMPLES que realmente funciona - só paleta + dithering + resolução reduzida
+      setLoadingMsg("Criando GIF com otimização temporal...");
+      // SOLUÇÃO REAL: Forçar FPS baixo + otimização temporal + compressão LZW
+      const realFps = Math.min(fps, quality === "fast" ? 6 : quality === "balanced" ? 8 : 10);
       const args = [
         "-ss", String(start),
         "-t", String(selectedDuration),
         "-i", inputName,
         "-i", paletteName,
-        "-filter_complex", `[0:v]${buildFilters()}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle`,
+        "-filter_complex", `[0:v]fps=${realFps},${buildFilters().replace(`fps=${fps},`, '')}[v];[v][1:v]paletteuse=dither=${getDitherMode(quality)}:diff_mode=rectangle`,
+        "-r", String(realFps),
         ...(loop ? ["-loop", "0"] : ["-loop", "-1"]),
         "-y", outputName,
       ];
