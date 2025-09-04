@@ -149,8 +149,9 @@ export default function GifLabPro() {
         return; 
       }
 
-      // Tentar carregar de cache primeiro
-      const cacheKey = 'ffmpeg-cache-v1';
+      // Tentar carregar de cache primeiro (invalidar cache antigo)
+      const cacheKey = 'ffmpeg-cache-v2';
+      localStorage.removeItem('ffmpeg-cache-v1'); // Limpar cache antigo
       const cachedMirror = localStorage.getItem(cacheKey);
       
       if (cachedMirror) {
